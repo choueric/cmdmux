@@ -20,7 +20,6 @@ package cmdmux
 
 import (
 	"errors"
-	"os"
 	"strings"
 )
 
@@ -59,59 +58,57 @@ func (c *CmdMux) String() string {
 
 // HandleFunc registers the handler function for the given command path cmdpath
 func (c *CmdMux) HandleFunc(cmdpath string, handler CmdHandler) error {
-	return func(n *cmdNode, cmdpath string, handler CmdHandler) error {
-		if cmdpath[0] != '/' {
-			return errors.New("cmdmux: cmdpath should be absolute")
-		}
+	n := c.root
+	if cmdpath[0] != '/' {
+		return errors.New("cmdmux: cmdpath should be absolute")
+	}
 
-		if cmdpath == "/" {
-			n.handler = handler
-			return nil
-		}
-
-		cmdStrs := strings.Split(cmdpath, "/")[1:]
-		last := len(cmdStrs) - 1
-		node := n
-		for i, v := range cmdStrs {
-			sub := node.hasSubNode(v)
-			if sub == nil {
-				sub = &cmdNode{name: v}
-				if i == last {
-					sub.handler = handler
-				}
-				node.subNodes = append(node.subNodes, sub)
-			}
-			node = sub
-		}
-
+	if cmdpath == "/" {
+		n.handler = handler
 		return nil
-	}(c.root, cmdpath, handler)
+	}
+
+	cmdStrs := strings.Split(cmdpath, "/")[1:]
+	last := len(cmdStrs) - 1
+	node := n
+	for i, v := range cmdStrs {
+		sub := node.hasSubNode(v)
+		if sub == nil {
+			sub = &cmdNode{name: v}
+			if i == last {
+				sub.handler = handler
+			}
+			node.subNodes = append(node.subNodes, sub)
+		}
+		node = sub
+	}
+
+	return nil
 }
 
 // Execute accepts the os.Args as command and executes it with data
 func (c *CmdMux) Execute(data interface{}) (int, error) {
-	return func(node *cmdNode, args []string, data interface{}) (int, error) {
-		var opts []string
-		args = args[1:]
-		for i, v := range args {
-			sub := node.hasSubNode(v)
-			if sub == nil {
-				opts = args[i:]
-				break
-			}
-			node = sub
+	node := c.root
+	var opts []string
+	args = args[1:]
+	for i, v := range args {
+		sub := node.hasSubNode(v)
+		if sub == nil {
+			opts = args[i:]
+			break
 		}
+		node = sub
+	}
 
-		if node == nil {
-			return 0, errors.New("cmdmux: no such cmdNode")
-		}
+	if node == nil {
+		return 0, errors.New("cmdmux: no such cmdNode")
+	}
 
-		if node.handler == nil {
-			return 0, errors.New("cmdmux: cmdNode does not have a handler")
-		}
+	if node.handler == nil {
+		return 0, errors.New("cmdmux: cmdNode does not have a handler")
+	}
 
-		return node.handler(opts, data)
-	}(c.root, os.Args, data)
+	return node.handler(opts, data)
 }
 
 // HandleFunc registers the handler function for the given command path cmdpath
