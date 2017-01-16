@@ -1,4 +1,5 @@
 // Simple Example, used like package `http`:
+//
 //  package main
 //
 //  import (
@@ -6,6 +7,10 @@
 //
 //  	"github.com/choueric/cmdmux"
 //  )
+//
+//  type Options struct {
+//  	profile string
+//  }
 //
 //  func rootHandler(args []string, data interface{}) (int, error) {
 //  	fmt.Println("Usage: build")
@@ -19,15 +24,26 @@
 //  }
 //
 //  func buildKernelHandler(args []string, data interface{}) (int, error) {
-//  	fmt.Println("invoke 'build kernel'")
+//  	options := data.(*Options)
+//  	if options.profile == "" {
+//  		fmt.Println("invoke 'build kernel'")
+//  	} else {
+//  		fmt.Printf("invoke 'build kernel' for %s", options.profile)
+//  	}
 //  	return 2, nil
 //  }
 //
 //  func main() {
+//  	var options Options
+//
 //  	cmdmux.HandleFunc("/", rootHandler)
 //  	cmdmux.HandleFunc("/build", buildHandler)
 //  	cmdmux.HandleFunc("/build/kernel", buildKernelHandler)
 //
-//  	cmdmux.Execute(nil)
+//  	if flagSet, err := cmdmux.FlagSet("/build/kernel"); err == nil {
+//  		flagSet.StringVar(&options.profile, "p", "", "speicify profile")
+//  	}
+//
+//  	cmdmux.Execute(&options)
 //  }
 package cmdmux
