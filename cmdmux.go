@@ -143,7 +143,11 @@ func (c *CmdMux) Execute(data interface{}) (int, error) {
 
 	err := node.flagSet.Parse(opts)
 	if err != nil {
-		return 0, errors.New("cmdmux: " + fmt.Sprintf("%v", err))
+		if err != flag.ErrHelp {
+			return 0, errors.New("cmdmux: " + fmt.Sprintf("%v", err))
+		} else {
+			os.Exit(0)
+		}
 	}
 	return node.handler(opts, data)
 }
