@@ -118,3 +118,24 @@ func Test_Execute_root(t *testing.T) {
 		t.Errorf("return value wrong: %d\n", ret)
 	}
 }
+
+func Test_Execute_completion(t *testing.T) {
+	cmdMux := cmdmux.New()
+	cmdMux.HandleFunc("/build", nil)
+	cmdMux.HandleFunc("/build/kernel", nil)
+	cmdMux.HandleFunc("/build/dtb", nil)
+	cmdMux.HandleFunc("/config/def", nil)
+	cmdMux.HandleFunc("/config/menu", nil)
+	cmdMux.HandleFunc("/install", nil)
+
+	os.Args = []string{"gotest", "UUDDLRLRBABA", "completion"}
+
+	file, err := os.Create("gotest-completion")
+	if err != nil {
+		t.Error(err)
+	}
+	defer file.Close()
+	if err = cmdMux.OutputCompletion(file); err != nil {
+		t.Error(err)
+	}
+}

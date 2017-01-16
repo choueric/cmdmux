@@ -45,7 +45,6 @@ var std = New()
 func New() *CmdMux {
 	n := &cmdNode{name: "/"}
 	c := &CmdMux{root: n}
-	c.HandleFunc("/UUDDLRLRBABA/completion", getCompletionHandler)
 	return c
 }
 
