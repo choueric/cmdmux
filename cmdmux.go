@@ -20,6 +20,9 @@ package cmdmux
 
 import (
 	"errors"
+	"flag"
+	"fmt"
+	"os"
 	"strings"
 )
 
@@ -33,6 +36,7 @@ type CmdMux struct {
 }
 
 type cmdNode struct {
+	flagSet  *flag.FlagSet
 	name     string
 	subNodes []*cmdNode
 	handler  CmdHandler
@@ -40,9 +44,15 @@ type cmdNode struct {
 
 var std = New()
 
+func newCmdNode(name string) *cmdNode {
+	node := &cmdNode{name: name}
+	node.flagSet = flag.NewFlagSet(name, flag.ContinueOnError /*flag.ExitOnError*/)
+	return node
+}
+
 // New creates a CmdMux variable with the default "/" empty command.
 func New() *CmdMux {
-	n := &cmdNode{name: "/"}
+	n := newCmdNode("/")
 	c := &CmdMux{root: n}
 	return c
 }
@@ -74,7 +84,7 @@ func (c *CmdMux) HandleFunc(cmdpath string, handler CmdHandler) error {
 	for i, v := range cmdStrs {
 		sub := node.hasSubNode(v)
 		if sub == nil {
-			sub = &cmdNode{name: v}
+			sub = newCmdNode(v)
 			if i == last {
 				sub.handler = handler
 			}
@@ -86,11 +96,34 @@ func (c *CmdMux) HandleFunc(cmdpath string, handler CmdHandler) error {
 	return nil
 }
 
+func (c *CmdMux) FlagSet(cmdpath string) (*flag.FlagSet, error) {
+	n := c.root
+	if cmdpath[0] != '/' {
+		return nil, errors.New("cmdmux: cmdpath should be absolute")
+	}
+
+	if cmdpath == "/" {
+		return n.flagSet, nil
+	}
+
+	cmdStrs := strings.Split(cmdpath, "/")[1:]
+	node := n
+	for _, v := range cmdStrs {
+		sub := node.hasSubNode(v)
+		if sub == nil {
+			return nil, errors.New("cmd node does not exist.")
+		}
+		node = sub
+	}
+
+	return node.flagSet, nil
+}
+
 // Execute accepts the os.Args as command and executes it with data
 func (c *CmdMux) Execute(data interface{}) (int, error) {
 	node := c.root
 	var opts []string
-	args = args[1:]
+	args := os.Args[1:]
 	for i, v := range args {
 		sub := node.hasSubNode(v)
 		if sub == nil {
@@ -105,9 +138,13 @@ func (c *CmdMux) Execute(data interface{}) (int, error) {
 	}
 
 	if node.handler == nil {
-		return 0, errors.New("cmdmux: cmdNode does not have a handler")
+		return 0, errors.New(fmt.Sprintf("cmdmux: %s does not have a handler", node.name))
 	}
 
+	err := node.flagSet.Parse(opts)
+	if err != nil {
+		return 0, errors.New("cmdmux: " + fmt.Sprintf("%v", err))
+	}
 	return node.handler(opts, data)
 }
 
@@ -121,6 +158,10 @@ func HandleFunc(cmdpath string, handler CmdHandler) error {
 // in the default CmdMux
 func Execute(data interface{}) (int, error) {
 	return std.Execute(data)
+}
+
+func FlagSet(cmdpath string) (*flag.FlagSet, error) {
+	return std.FlagSet(cmdpath)
 }
 
 // String() return the string format of default CmdMux

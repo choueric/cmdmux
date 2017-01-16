@@ -17,6 +17,7 @@
 package cmdmux_test
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -40,6 +41,16 @@ func build_kernel(args []string, data interface{}) (int, error) {
 
 func root_handler(args []string, data interface{}) (int, error) {
 	return ROOT_RET, nil
+}
+
+func flagHandler(args []string, data interface{}) (int, error) {
+	str := data.(*string)
+
+	if *str == "test" {
+		return 0, nil
+	} else {
+		return 0, errors.New("flag parsed wrongly")
+	}
 }
 
 // use the built-in variable
@@ -80,7 +91,7 @@ func Test_Execute_normal(t *testing.T) {
 func Test_Execute_opts(t *testing.T) {
 	cmdMux := cmdmux.New()
 	cmdMux.HandleFunc("/build/kernel", build_kernel)
-	os.Args = []string{"gotest", "build", "kernel", "-p", "tk1"}
+	os.Args = []string{"gotest", "build", "kernel"}
 
 	ret, err := cmdMux.Execute(nil)
 	if err != nil {
@@ -95,7 +106,7 @@ func Test_Execute_opts(t *testing.T) {
 func Test_Execute_noMidNode(t *testing.T) {
 	cmdMux := cmdmux.New()
 	cmdMux.HandleFunc("/build/kernel", build_kernel)
-	os.Args = []string{"gotest", "build", "-p", "tk1"}
+	os.Args = []string{"gotest", "build"}
 
 	_, err := cmdMux.Execute(nil)
 	if err == nil {
@@ -107,7 +118,7 @@ func Test_Execute_midNode(t *testing.T) {
 	cmdMux := cmdmux.New()
 	cmdMux.HandleFunc("/build", build)
 	cmdMux.HandleFunc("/build/kernel", build_kernel)
-	os.Args = []string{"gotest", "build", "-p", "tk1"}
+	os.Args = []string{"gotest", "build"}
 
 	ret, err := cmdMux.Execute(nil)
 	if err != nil {
@@ -135,7 +146,7 @@ func Test_Execute_root(t *testing.T) {
 	}
 }
 
-func Test_Execute_completion(t *testing.T) {
+func Test_Completion(t *testing.T) {
 	cmdMux := cmdmux.New()
 	cmdMux.HandleFunc("/build", nil)
 	cmdMux.HandleFunc("/build/kernel", nil)
@@ -152,6 +163,25 @@ func Test_Execute_completion(t *testing.T) {
 	}
 	defer file.Close()
 	if err = cmdMux.OutputCompletion(file); err != nil {
+		t.Error(err)
+	}
+}
+
+func Test_FlagSet(t *testing.T) {
+	var profile string
+	cmdMux := cmdmux.New()
+	cmdMux.HandleFunc("/flag", flagHandler)
+
+	os.Args = []string{"gotest", "flag", "-p", "test"}
+
+	if flagSet, err := cmdMux.FlagSet("/flag"); err == nil {
+		flagSet.StringVar(&profile, "p", "", "speicify profile")
+	} else {
+		t.Error(err)
+	}
+
+	_, err := cmdMux.Execute(&profile)
+	if err != nil {
 		t.Error(err)
 	}
 }
