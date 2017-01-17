@@ -162,7 +162,7 @@ func Test_Completion(t *testing.T) {
 		t.Error(err)
 	}
 	defer file.Close()
-	if err = cmdMux.OutputCompletion(file); err != nil {
+	if err = cmdMux.OutputCompletion("test", file); err != nil {
 		t.Error(err)
 	}
 }

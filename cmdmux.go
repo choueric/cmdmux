@@ -34,12 +34,6 @@ type CmdMux struct {
 	root *cmdNode
 }
 
-type cmdNode struct {
-	name     string
-	subNodes []*cmdNode
-	handler  CmdHandler
-}
-
 var std = New()
 
 func newCmdNode(name string) *cmdNode {
@@ -56,11 +50,10 @@ func New() *CmdMux {
 
 // String() return the string format of CmdMux c.
 func (c *CmdMux) String() string {
-	return func(n *cmdNode) string {
-		var result string
-		n.toString("", &result)
-		return result
-	}(c.root)
+	node := c.root
+	var result string
+	node.toString("", &result)
+	return result
 }
 
 // HandleFunc registers the handler function for the given command path cmdpath
@@ -133,54 +126,4 @@ func Execute(data interface{}) (int, error) {
 // String() return the string format of default CmdMux
 func String() string {
 	return std.String()
-}
-
-func (n *cmdNode) hasSubNode(name string) *cmdNode {
-	for _, v := range n.subNodes {
-		if v.name == name {
-			return v
-		}
-	}
-	return nil
-}
-
-func (n *cmdNode) toString(prefix string, result *string) {
-	switch prefix {
-	case "/":
-		prefix = prefix + n.name
-	case "":
-		prefix = "/"
-	default:
-		prefix = prefix + "/" + n.name
-	}
-
-	if len(n.subNodes) == 0 {
-		*result = *result + prefix + "\n"
-	} else {
-		for _, v := range n.subNodes {
-			v.toString(prefix, result)
-		}
-	}
-}
-
-func (c *CmdMux) getCmdNode(cmdpath string) (*cmdNode, error) {
-	if cmdpath[0] != '/' {
-		return nil, errors.New("cmdmux: cmdpath should be absolute")
-	}
-
-	if cmdpath == "/" {
-		return c.root, nil
-	}
-
-	cmdStrs := strings.Split(cmdpath, "/")[1:]
-	node := c.root
-	for _, v := range cmdStrs {
-		sub := node.hasSubNode(v)
-		if sub == nil {
-			return nil, errors.New(fmt.Sprintf("cmdmux: node %s does not exist.", v))
-		}
-		node = sub
-	}
-
-	return node, nil
 }
