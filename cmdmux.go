@@ -20,7 +20,6 @@ package cmdmux
 
 import (
 	"errors"
-	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -36,7 +35,6 @@ type CmdMux struct {
 }
 
 type cmdNode struct {
-	flagSet  *flag.FlagSet
 	name     string
 	subNodes []*cmdNode
 	handler  CmdHandler
@@ -46,7 +44,6 @@ var std = New()
 
 func newCmdNode(name string) *cmdNode {
 	node := &cmdNode{name: name}
-	node.flagSet = flag.NewFlagSet(name, flag.ContinueOnError /*flag.ExitOnError*/)
 	return node
 }
 
@@ -96,29 +93,6 @@ func (c *CmdMux) HandleFunc(cmdpath string, handler CmdHandler) error {
 	return nil
 }
 
-func (c *CmdMux) FlagSet(cmdpath string) (*flag.FlagSet, error) {
-	n := c.root
-	if cmdpath[0] != '/' {
-		return nil, errors.New("cmdmux: cmdpath should be absolute")
-	}
-
-	if cmdpath == "/" {
-		return n.flagSet, nil
-	}
-
-	cmdStrs := strings.Split(cmdpath, "/")[1:]
-	node := n
-	for _, v := range cmdStrs {
-		sub := node.hasSubNode(v)
-		if sub == nil {
-			return nil, errors.New("cmd node does not exist.")
-		}
-		node = sub
-	}
-
-	return node.flagSet, nil
-}
-
 // Execute accepts the os.Args as command and executes it with data
 func (c *CmdMux) Execute(data interface{}) (int, error) {
 	node := c.root
@@ -134,21 +108,13 @@ func (c *CmdMux) Execute(data interface{}) (int, error) {
 	}
 
 	if node == nil {
-		return 0, errors.New("cmdmux: no such cmdNode")
+		return 0, errors.New("cmdmux: cannot find cmdnode.")
 	}
 
 	if node.handler == nil {
-		return 0, errors.New(fmt.Sprintf("cmdmux: %s does not have a handler", node.name))
+		return 0, errors.New(fmt.Sprintf("cmdmux: %s does not have a handler.", node.name))
 	}
 
-	err := node.flagSet.Parse(opts)
-	if err != nil {
-		if err != flag.ErrHelp {
-			return 0, errors.New("cmdmux: " + fmt.Sprintf("%v", err))
-		} else {
-			os.Exit(0)
-		}
-	}
 	return node.handler(opts, data)
 }
 
@@ -162,10 +128,6 @@ func HandleFunc(cmdpath string, handler CmdHandler) error {
 // in the default CmdMux
 func Execute(data interface{}) (int, error) {
 	return std.Execute(data)
-}
-
-func FlagSet(cmdpath string) (*flag.FlagSet, error) {
-	return std.FlagSet(cmdpath)
 }
 
 // String() return the string format of default CmdMux
@@ -199,4 +161,26 @@ func (n *cmdNode) toString(prefix string, result *string) {
 			v.toString(prefix, result)
 		}
 	}
+}
+
+func (c *CmdMux) getCmdNode(cmdpath string) (*cmdNode, error) {
+	if cmdpath[0] != '/' {
+		return nil, errors.New("cmdmux: cmdpath should be absolute")
+	}
+
+	if cmdpath == "/" {
+		return c.root, nil
+	}
+
+	cmdStrs := strings.Split(cmdpath, "/")[1:]
+	node := c.root
+	for _, v := range cmdStrs {
+		sub := node.hasSubNode(v)
+		if sub == nil {
+			return nil, errors.New(fmt.Sprintf("cmdmux: node %s does not exist.", v))
+		}
+		node = sub
+	}
+
+	return node, nil
 }

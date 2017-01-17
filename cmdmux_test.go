@@ -166,22 +166,3 @@ func Test_Completion(t *testing.T) {
 		t.Error(err)
 	}
 }
-
-func Test_FlagSet(t *testing.T) {
-	var profile string
-	cmdMux := cmdmux.New()
-	cmdMux.HandleFunc("/flag", flagHandler)
-
-	os.Args = []string{"gotest", "flag", "-p", "test"}
-
-	if flagSet, err := cmdMux.FlagSet("/flag"); err == nil {
-		flagSet.StringVar(&profile, "p", "", "speicify profile")
-	} else {
-		t.Error(err)
-	}
-
-	_, err := cmdMux.Execute(&profile)
-	if err != nil {
-		t.Error(err)
-	}
-}
