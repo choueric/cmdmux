@@ -55,10 +55,11 @@ func flagHandler(args []string, data interface{}) (int, error) {
 
 // use the built-in variable
 func Test_HandleFunc(t *testing.T) {
+	cmdmux.HandleFunc("/config/def", nil)
+	cmdmux.HandleFunc("/build/kernel/image", nil)
+	cmdmux.HandleFunc("/build/dtb", nil)
 	cmdmux.HandleFunc("/build", nil)
 	cmdmux.HandleFunc("/build/kernel", nil)
-	cmdmux.HandleFunc("/build/dtb", nil)
-	cmdmux.HandleFunc("/config/def", nil)
 	cmdmux.HandleFunc("/config/menu", nil)
 	cmdmux.HandleFunc("/install", nil)
 
@@ -150,10 +151,13 @@ func Test_Completion(t *testing.T) {
 	cmdMux := cmdmux.New()
 	cmdMux.HandleFunc("/build", nil)
 	cmdMux.HandleFunc("/build/kernel", nil)
+	cmdMux.HandleFunc("/build/kernel/image", nil)
 	cmdMux.HandleFunc("/build/dtb", nil)
 	cmdMux.HandleFunc("/config/def", nil)
 	cmdMux.HandleFunc("/config/menu", nil)
 	cmdMux.HandleFunc("/install", nil)
+
+	fmt.Println(cmdmux.String())
 
 	os.Args = []string{"gotest", "UUDDLRLRBABA", "completion"}
 
@@ -162,7 +166,7 @@ func Test_Completion(t *testing.T) {
 		t.Error(err)
 	}
 	defer file.Close()
-	if err = cmdMux.OutputCompletion("test", file); err != nil {
+	if err = cmdMux.GenerateCompletion("test", file); err != nil {
 		t.Error(err)
 	}
 }

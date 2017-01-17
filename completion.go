@@ -21,12 +21,30 @@ import (
 	"io"
 )
 
-func outputCmds(w io.Writer, node *cmdNode) {
+func genEntry(node *cmdNode, depth int, data interface{}) {
+	if len(node.subNodes) == 0 {
+		return
+	}
+	w := data.(io.Writer)
+	fmt.Fprintf(w, "  %s )\n", node.name)
+	fmt.Fprint(w, `    COMPREPLY=( $(compgen -W "`)
+	for _, sub := range node.subNodes {
+		fmt.Fprintf(w, "%s ", sub.name)
+	}
+	fmt.Fprintln(w, `" -- $cur) )`)
+	fmt.Fprintln(w, `    return 0`)
+	fmt.Fprintln(w, `    ;;`)
 }
 
-// OutputCompletion outputs the command completion file for *bash*.
-func (c *CmdMux) OutputCompletion(program string, w io.Writer) error {
-	node := c.root
+func generateEntries(w io.Writer, node *cmdNode) {
+	walkByDepth(node.subNodes, 0, genEntry, w)
+}
+
+// GenerateCompletion generate shell completion file for *bash*.
+//
+// 1. list all depth 1 nodes into $opts
+// 2. create entry for every node which has sub-node.
+func (c *CmdMux) GenerateCompletion(program string, w io.Writer) error {
 	fmt.Fprintf(w, "# bash completion file for %s\n", program)
 	fmt.Fprintf(w, "# Copy this file to somewhere (e.g. ~/.test-completion)\n"+
 		"# and then `$ source ~/.test-completion`\n\n")
@@ -37,14 +55,17 @@ func (c *CmdMux) OutputCompletion(program string, w io.Writer) error {
 	fmt.Fprintln(w, `  COMPREPLY=()`)
 	fmt.Fprintln(w, `  cur="${COMP_WORDS[COMP_CWORD]}"`)
 	fmt.Fprintln(w, `  prev="${COMP_WORDS[COMP_CWORD-1]}"`)
+
+	// 1. create opts
 	fmt.Fprintf(w, `  opts="`)
-	for _, v := range node.subNodes {
+	for _, v := range c.root.subNodes {
 		fmt.Fprintf(w, "%s ", v.name)
 	}
 	fmt.Fprintf(w, "\"\n\n")
 	fmt.Fprintln(w, `  case "$prev" in`)
 
-	outputCmds(w, node)
+	// 2. create entries
+	generateEntries(w, c.root)
 
 	fmt.Fprintln(w, "  *)")
 	fmt.Fprintln(w, `    local prev2="${COMP_WORDS[COMP_CWORD-2]}"`)
@@ -57,37 +78,6 @@ func (c *CmdMux) OutputCompletion(program string, w io.Writer) error {
 	return nil
 }
 
-func OutputCompletion(program string, w io.Writer) error {
-	return std.OutputCompletion(program, w)
+func GenerateCompletion(program string, w io.Writer) error {
+	return std.GenerateCompletion(program, w)
 }
-
-// _kbdashboard()
-// {
-//     local cur prev opts
-//     COMPREPLY=()
-//     cur="${COMP_WORDS[COMP_CWORD]}"
-//     prev="${COMP_WORDS[COMP_CWORD-1]}"
-//     opts="list choose edit help make build config install version"
-//
-//     case "$prev" in
-//     choose | make | install | version)
-//         COMPREPLY=()
-//         return 0
-//         ;;
-//     list )
-//         COMPREPLY=( $(compgen -W "-v" -- $cur) )
-//         return 0
-//         ;;
-//     edit )
-//         COMPREPLY=( $(compgen -W "profile install" -- $cur) )
-//         return 0
-//         ;;
-//     *)
-//         local prev2="${COMP_WORDS[COMP_CWORD-2]}"
-//         ;;
-//     esac
-//
-//     COMPREPLY=( $(compgen -W "$opts" -- $cur) )
-//     return 0
-// }
-// complete -F _kbdashboard kbdashboard

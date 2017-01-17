@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/choueric/cmdmux"
 )
@@ -11,8 +12,9 @@ type Options struct {
 }
 
 func rootHandler(args []string, data interface{}) (int, error) {
-	fmt.Println("Usage: build")
-	fmt.Println("       build kernel")
+	fmt.Println("Usage: build [uboot|kernel]")
+	fmt.Println("       build kernel [image|dtb]")
+	fmt.Println("       completion")
 	return 0, nil
 }
 
@@ -27,12 +29,19 @@ func buildKernelHandler(args []string, data interface{}) (int, error) {
 	return 2, nil
 }
 
+func completionHandler(args []string, data interface{}) (int, error) {
+	cmdmux.GenerateCompletion("example", os.Stdout)
+	return 2, nil
+}
+
 func main() {
 	opt := &Options{name: "arm"}
 
 	cmdmux.HandleFunc("/", rootHandler)
-	cmdmux.HandleFunc("/build", buildHandler)
-	cmdmux.HandleFunc("/build/kernel", buildKernelHandler)
+	cmdmux.HandleFunc("/build/uboot", buildKernelHandler)
+	cmdmux.HandleFunc("/build/kernel/image", buildKernelHandler)
+	cmdmux.HandleFunc("/build/kernel/dtb", buildKernelHandler)
+	cmdmux.HandleFunc("/completion", completionHandler)
 
 	cmdmux.Execute(opt)
 }
