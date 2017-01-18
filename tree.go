@@ -20,6 +20,7 @@ package cmdmux
 import (
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 )
 
@@ -47,14 +48,42 @@ func newCmdNode(name string) *cmdNode {
 	return node
 }
 
+var lastDepth = 0
+
+const exeSymbol = "*"
+
+func printTreeNode(node *cmdNode, depth int, data interface{}) {
+	w := data.(io.Writer)
+	if lastDepth != depth {
+		fmt.Fprintf(w, "\n------------ [%d] -----------------\n", depth)
+		lastDepth = depth
+	}
+	if node.handler != nil {
+		fmt.Fprintf(w, "%s ", node.name+exeSymbol)
+	} else {
+		fmt.Fprintf(w, "%s ", node.name)
+	}
+}
+
+func (n *cmdNode) printTree(w io.Writer) {
+	walkByDepth(n.subNodes, 0, printTreeNode, w)
+	fmt.Fprintf(w, "\n-----------------------------------\n")
+}
+
 func (n *cmdNode) toString(prefix string, result *string) {
 	switch prefix {
 	case "/":
-		prefix = prefix + n.name
-	case "":
-		prefix = "/"
+		if n.handler != nil {
+			prefix = exeSymbol
+		} else {
+			prefix = ""
+		}
 	default:
-		prefix = prefix + "/" + n.name
+		if n.handler != nil {
+			prefix = prefix + "/" + n.name + exeSymbol
+		} else {
+			prefix = prefix + "/" + n.name
+		}
 	}
 
 	if len(n.subNodes) == 0 {

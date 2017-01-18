@@ -55,16 +55,41 @@ func flagHandler(args []string, data interface{}) (int, error) {
 
 // use the built-in variable
 func Test_HandleFunc(t *testing.T) {
+	cmdmux.HandleFunc("/", root_handler)
 	cmdmux.HandleFunc("/config/def", nil)
 	cmdmux.HandleFunc("/build/kernel/image", nil)
 	cmdmux.HandleFunc("/build/dtb", nil)
-	cmdmux.HandleFunc("/build", nil)
-	cmdmux.HandleFunc("/build/kernel", nil)
+	cmdmux.HandleFunc("/build", build)
+	cmdmux.HandleFunc("/build/kernel", build_kernel)
 	cmdmux.HandleFunc("/config/menu", nil)
 	cmdmux.HandleFunc("/install", nil)
 
 	fmt.Printf("output of cmdmux.String():\n")
 	fmt.Println(cmdmux.String())
+	cmdmux.PrintTree(os.Stdout)
+
+	os.Args = []string{"gotest", "build", "kernel", "-p", "test"}
+	ret, err := cmdmux.Execute(nil)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if ret != BUILD_KERNEL_RET {
+		t.Errorf("return value wrong: %d\n", ret)
+	}
+
+	os.Args = []string{"gotest", "build"}
+
+	ret, err = cmdmux.Execute(nil)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if ret != BUILD_RET {
+		t.Errorf("return value wrong: %d\n", ret)
+	}
 }
 
 func Test_Invalid(t *testing.T) {
@@ -83,6 +108,7 @@ func Test_Execute_normal(t *testing.T) {
 	ret, err := cmdMux.Execute(nil)
 	if err != nil {
 		t.Error(err)
+		return
 	}
 
 	if ret != BUILD_KERNEL_RET {
@@ -98,6 +124,7 @@ func Test_Execute_opts(t *testing.T) {
 	ret, err := cmdMux.Execute(nil)
 	if err != nil {
 		t.Error(err)
+		return
 	}
 
 	if ret != BUILD_KERNEL_RET {
@@ -125,6 +152,7 @@ func Test_Execute_midNode(t *testing.T) {
 	ret, err := cmdMux.Execute(nil)
 	if err != nil {
 		t.Error(err)
+		return
 	}
 
 	if ret != BUILD_RET {
@@ -141,6 +169,7 @@ func Test_Execute_root(t *testing.T) {
 	ret, err := cmdMux.Execute(nil)
 	if err != nil {
 		t.Error(err)
+		return
 	}
 
 	if ret != ROOT_RET {
@@ -161,17 +190,10 @@ func Test_Completion(t *testing.T) {
 	file, err := os.Create("gotest-completion")
 	if err != nil {
 		t.Error(err)
+		return
 	}
 	defer file.Close()
 	if err = cmdMux.GenerateCompletion("test", file); err != nil {
-		t.Error(err)
-	}
-}
-
-func Test_Completion_root(t *testing.T) {
-	cmdMux := cmdmux.New()
-
-	if err := cmdMux.GenerateCompletion("onlyroot", os.Stdout); err != nil {
 		t.Error(err)
 	}
 }

@@ -21,6 +21,7 @@ package cmdmux
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 )
@@ -43,40 +44,46 @@ func New() *CmdMux {
 	return c
 }
 
-// String() return the string format of CmdMux c.
+// String return the string format of CmdMux c.
 func (c *CmdMux) String() string {
-	node := c.root
 	var result string
-	node.toString("", &result)
+	c.root.toString("/", &result)
 	return result
+}
+
+// PrintTree outputs a simple tree structure of c
+func (c *CmdMux) PrintTree(w io.Writer) {
+	c.root.printTree(w)
 }
 
 // HandleFunc registers the handler function for the given command path cmdpath
 func (c *CmdMux) HandleFunc(cmdpath string, handler CmdHandler) error {
-	n := c.root
 	if cmdpath[0] != '/' {
 		return errors.New("cmdmux: cmdpath should be absolute")
 	}
 
 	if cmdpath == "/" {
-		n.handler = handler
+		c.root.handler = handler
 		return nil
 	}
 
 	cmdStrs := strings.Split(cmdpath, "/")[1:]
 	last := len(cmdStrs) - 1
-	node := n
+	node := c.root
 	for i, v := range cmdStrs {
 		sub := node.hasSubNode(v)
 		if sub == nil {
 			sub = newCmdNode(v)
-			if i == last {
-				sub.handler = handler
-			}
 			node.subNodes = append(node.subNodes, sub)
+		}
+		if i == last {
+			node = sub
+			break
 		}
 		node = sub
 	}
+	node.handler = handler
+	//fmt.Printf("cmdmux: add handler %s -> %s\n", cmdpath, node.name)
 
 	return nil
 }
@@ -121,4 +128,9 @@ func Execute(data interface{}) (int, error) {
 // String() return the string format of default CmdMux
 func String() string {
 	return std.String()
+}
+
+// PrintTree outputs a simple tree structure of built-in cmdmux
+func PrintTree(w io.Writer) {
+	std.PrintTree(w)
 }
