@@ -39,6 +39,7 @@ type cmdNode struct {
 	handler  CmdHandler
 }
 
+// cmdnode, depth, data
 type walkHandler func(*cmdNode, int, interface{})
 
 func newCmdNode(name string) *cmdNode {

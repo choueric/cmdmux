@@ -167,3 +167,11 @@ func Test_Completion(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func Test_Completion_root(t *testing.T) {
+	cmdMux := cmdmux.New()
+
+	if err := cmdMux.GenerateCompletion("onlyroot", os.Stdout); err != nil {
+		t.Error(err)
+	}
+}
