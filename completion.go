@@ -25,7 +25,7 @@ import (
 const (
 	header = "# bash completion file for %s\n" +
 		"# Copy this file to somewhere (e.g. ~/.%s-completion)\n" +
-		"# and then '$ source ~/.%s-completion\n\n"
+		"# and then '$ source ~/.%s-completion'\n\n"
 
 	body = `  local cur prev opts
   COMPREPLY=()
