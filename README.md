@@ -13,6 +13,7 @@ The first way can be implemented by the `flag` package of Golang, and the
 second this package.
 
 The package can:
+
 1. Build a terminal programme with various commands easily.
 2. Generate a shell completion file (Now only for bash) !
 
