@@ -115,3 +115,9 @@ if err = cmdmux.GenerateCompletion("test", file); err != nil {
 	fmt.Println(err)
 }
 ```
+
+Then apply this file:
+
+```sh
+$ source ./test-completion
+```
