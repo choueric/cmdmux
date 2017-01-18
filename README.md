@@ -12,7 +12,13 @@ In general, there are two styles a terminal programme to interact with users.
 The first way can be implemented by the `flag` package of Golang, and the
 second this package.
 
+The package can:
+1. Build a terminal programme with various commands easily.
+2. Generate a shell completion file (Now only for bash) !
+
 # Usage
+
+## Build command line
 
 Below is a simple example:
 
@@ -84,4 +90,27 @@ Usage: build
 $ test
 Usage: build
        build kernel
+```
+
+## Generate shell completion file
+
+After building various commands with `HandleFunc()`, it's time to get a shell
+(bash actually) completion file which helps users of your programme input
+commands easily on terminal.
+
+Below is a example to get such file for `test` programme:
+
+```go
+// some HandleFunc codes ...
+
+file, err := os.Create("test-completion")
+if err != nil {
+	fmt.Println(err)
+	return
+}
+defer file.Close()
+
+if err = cmdmux.GenerateCompletion("test", file); err != nil {
+	fmt.Println(err)
+}
 ```
