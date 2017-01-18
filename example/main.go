@@ -41,7 +41,15 @@ func main() {
 	cmdmux.HandleFunc("/build/uboot", buildKernelHandler)
 	cmdmux.HandleFunc("/build/kernel/image", buildKernelHandler)
 	cmdmux.HandleFunc("/build/kernel/dtb", buildKernelHandler)
+	cmdmux.HandleFunc("/build", buildHandler)
 	cmdmux.HandleFunc("/completion", completionHandler)
 
-	cmdmux.Execute(opt)
+	fmt.Println(cmdmux.String())
+
+	ret, err := cmdmux.Execute(opt)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Printf("return value: %d\n", ret)
 }
