@@ -12,9 +12,7 @@ type Options struct {
 }
 
 func rootHandler(args []string, data interface{}) (int, error) {
-	fmt.Println("Usage: build [uboot|kernel]")
-	fmt.Println("       build kernel [image|dtb]")
-	fmt.Println("       completion")
+	fmt.Printf("Usage:\n%s\n", cmdmux.String())
 	return 0, nil
 }
 
@@ -34,17 +32,26 @@ func completionHandler(args []string, data interface{}) (int, error) {
 	return 2, nil
 }
 
+func optionOHandler(args []string, data interface{}) (int, error) {
+	fmt.Printf("invoke 'option -o', args = %v\n", args)
+	return 3, nil
+}
+
+func optionPHandler(args []string, data interface{}) (int, error) {
+	fmt.Printf("invoke 'option -p', args = %v\n", args)
+	return 3, nil
+}
+
 func main() {
 	opt := &Options{name: "arm"}
 
 	cmdmux.HandleFunc("/", rootHandler)
-	cmdmux.HandleFunc("/build/uboot", buildKernelHandler)
 	cmdmux.HandleFunc("/build/kernel/image", buildKernelHandler)
 	cmdmux.HandleFunc("/build/kernel/dtb", buildKernelHandler)
 	cmdmux.HandleFunc("/build", buildHandler)
+	cmdmux.HandleFunc("/option/-o", optionOHandler)
+	cmdmux.HandleFunc("/option/-p", optionPHandler)
 	cmdmux.HandleFunc("/completion", completionHandler)
-
-	fmt.Println(cmdmux.String())
 
 	ret, err := cmdmux.Execute(opt)
 	if err != nil {
