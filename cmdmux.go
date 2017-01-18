@@ -90,6 +90,7 @@ func (c *CmdMux) HandleFunc(cmdpath string, handler CmdHandler) error {
 
 // Execute accepts the os.Args as command and executes it with data
 func (c *CmdMux) Execute(data interface{}) (int, error) {
+	path := ""
 	node := c.root
 	var opts []string
 	args := os.Args[1:]
@@ -100,16 +101,18 @@ func (c *CmdMux) Execute(data interface{}) (int, error) {
 			break
 		}
 		node = sub
+		path = path + "/" + node.name
 	}
 
-	if node == nil {
-		return 0, errors.New("cmdmux: cannot find cmdnode.")
+	if path == "" {
+		path = "/"
 	}
-
 	if node.handler == nil {
-		return 0, errors.New(fmt.Sprintf("cmdmux: %s does not have a handler.", node.name))
+		msg := fmt.Sprintf("cmdmux: %s does not have a handler.", path)
+		return 0, errors.New(msg)
 	}
 
+	//fmt.Printf("cmdmux: invode %s\n", path)
 	return node.handler(opts, data)
 }
 
