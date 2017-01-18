@@ -41,6 +41,11 @@ type cmdNode struct {
 
 type walkHandler func(*cmdNode, int, interface{})
 
+func newCmdNode(name string) *cmdNode {
+	node := &cmdNode{name: name}
+	return node
+}
+
 func (n *cmdNode) toString(prefix string, result *string) {
 	switch prefix {
 	case "/":

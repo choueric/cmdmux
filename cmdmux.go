@@ -36,12 +36,7 @@ type CmdMux struct {
 
 var std = New()
 
-func newCmdNode(name string) *cmdNode {
-	node := &cmdNode{name: name}
-	return node
-}
-
-// New creates a CmdMux variable with the default "/" empty command.
+// New creates a CmdMux with the default "/" empty command.
 func New() *CmdMux {
 	n := newCmdNode("/")
 	c := &CmdMux{root: n}

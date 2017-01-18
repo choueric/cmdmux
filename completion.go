@@ -22,23 +22,47 @@ import (
 	"io"
 )
 
-func genEntry(node *cmdNode, depth int, data interface{}) {
+const (
+	header = `# Copy this file to somewhere (e.g. ~/.test-completion)
+# and then '$ source ~/.test-completion')
+
+`
+	body1 = `  local cur prev opts
+  COMPREPLY=()
+  cur="${COMP_WORDS[COMP_CWORD]}"
+  prev="${COMP_WORDS[COMP_CWORD-1]}"
+`
+	end = `  *)
+    local prev2="${COMP_WORDS[COMP_CWORD-2]}"
+    ;;
+  esac
+
+  COMPREPLY=( $(compgen -W "$opts" -- $cur) )
+  return 0
+}
+`
+	entryHead = `    COMPREPLY=( $(compgen -W "`
+	entryEnd  = `" -- $cur) )
+    return 0
+    ;;
+`
+)
+
+func generateEntry(node *cmdNode, depth int, data interface{}) {
 	if len(node.subNodes) == 0 {
 		return
 	}
 	w := data.(io.Writer)
 	fmt.Fprintf(w, "  %s )\n", node.name)
-	fmt.Fprint(w, `    COMPREPLY=( $(compgen -W "`)
+	fmt.Fprintf(w, entryHead)
 	for _, sub := range node.subNodes {
 		fmt.Fprintf(w, "%s ", sub.name)
 	}
-	fmt.Fprintln(w, `" -- $cur) )`)
-	fmt.Fprintln(w, `    return 0`)
-	fmt.Fprintln(w, `    ;;`)
+	fmt.Fprintf(w, entryEnd)
 }
 
 func generateEntries(w io.Writer, node *cmdNode) {
-	walkByDepth(node.subNodes, 0, genEntry, w)
+	walkByDepth(node.subNodes, 0, generateEntry, w)
 }
 
 // GenerateCompletion generate shell completion file for *bash*.
@@ -47,15 +71,10 @@ func generateEntries(w io.Writer, node *cmdNode) {
 // 2. create entry for every node which has sub-node.
 func (c *CmdMux) GenerateCompletion(program string, w io.Writer) error {
 	fmt.Fprintf(w, "# bash completion file for %s\n", program)
-	fmt.Fprintf(w, "# Copy this file to somewhere (e.g. ~/.test-completion)\n"+
-		"# and then `$ source ~/.test-completion`\n\n")
+	fmt.Fprintf(w, header)
 
 	fmt.Fprintf(w, "_%s()\n{\n", program)
-
-	fmt.Fprintln(w, `  local cur prev opts`)
-	fmt.Fprintln(w, `  COMPREPLY=()`)
-	fmt.Fprintln(w, `  cur="${COMP_WORDS[COMP_CWORD]}"`)
-	fmt.Fprintln(w, `  prev="${COMP_WORDS[COMP_CWORD-1]}"`)
+	fmt.Fprintf(w, body1)
 
 	// 1. create opts
 	fmt.Fprintf(w, `  opts="`)
@@ -68,13 +87,8 @@ func (c *CmdMux) GenerateCompletion(program string, w io.Writer) error {
 	// 2. create entries
 	generateEntries(w, c.root)
 
-	fmt.Fprintln(w, "  *)")
-	fmt.Fprintln(w, `    local prev2="${COMP_WORDS[COMP_CWORD-2]}"`)
-	fmt.Fprintf(w, "    ;;\n")
-	fmt.Fprintf(w, "  esac\n\n")
-	fmt.Fprintln(w, `  COMPREPLY=( $(compgen -W "$opts" -- $cur) )`)
-	fmt.Fprintln(w, `  return 0`)
-	fmt.Fprintf(w, "}\ncomplete -F _%s %s\n", program, program)
+	fmt.Fprintf(w, end)
+	fmt.Fprintf(w, "complete -F _%s %s\n", program, program)
 
 	return nil
 }

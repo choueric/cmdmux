@@ -63,6 +63,7 @@ func Test_HandleFunc(t *testing.T) {
 	cmdmux.HandleFunc("/config/menu", nil)
 	cmdmux.HandleFunc("/install", nil)
 
+	fmt.Printf("output of cmdmux.String():\n")
 	fmt.Println(cmdmux.String())
 }
 
@@ -156,10 +157,6 @@ func Test_Completion(t *testing.T) {
 	cmdMux.HandleFunc("/config/def", nil)
 	cmdMux.HandleFunc("/config/menu", nil)
 	cmdMux.HandleFunc("/install", nil)
-
-	fmt.Println(cmdmux.String())
-
-	os.Args = []string{"gotest", "UUDDLRLRBABA", "completion"}
 
 	file, err := os.Create("gotest-completion")
 	if err != nil {
