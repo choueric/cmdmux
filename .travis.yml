@@ -1,0 +1,12 @@
+language: go
+sudo: false
+
+go:
+  - go: 1.3.x
+  - go: 1.5
+  - go: 1.6
+  - go: 1.7.x
+
+script:
+  - go get -t -v ./...
+  - go test -v -race ./...
