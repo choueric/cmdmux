@@ -2,6 +2,11 @@
 
 Package cmdmux implements a command parser and router for terminal programme.
 
+
+[![Build Status](https://travis-ci.org/choueric/cmdmux.svg?branch=master)](https://travis-ci.org/choueric/cmdmux)
+[![GoDoc](https://godoc.org/github.com/choueric/cmdmux?status.svg)](https://godoc.org/github.com/choueric/cmdmux)
+
+
 # Overview
 
 In general, there are two styles a terminal programme to interact with users.
