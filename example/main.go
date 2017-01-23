@@ -12,7 +12,8 @@ type Options struct {
 }
 
 func rootHandler(args []string, data interface{}) (int, error) {
-	fmt.Printf("Usage:\n%s\n", cmdmux.String())
+	fmt.Println("Usage:")
+	cmdmux.PrintTree(os.Stdout)
 	return 0, nil
 }
 
