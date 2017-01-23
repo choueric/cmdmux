@@ -44,13 +44,6 @@ func New() *CmdMux {
 	return c
 }
 
-// String return the string format of CmdMux c.
-func (c *CmdMux) String() string {
-	var result string
-	c.root.toString("/", &result)
-	return result
-}
-
 // PrintTree outputs a simple tree structure of c
 func (c *CmdMux) PrintTree(w io.Writer) {
 	c.root.printTree(w)
@@ -126,11 +119,6 @@ func HandleFunc(cmdpath string, handler CmdHandler) error {
 // in the default CmdMux
 func Execute(data interface{}) (int, error) {
 	return std.Execute(data)
-}
-
-// String() return the string format of default CmdMux
-func String() string {
-	return std.String()
 }
 
 // PrintTree outputs a simple tree structure of built-in cmdmux

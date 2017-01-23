@@ -64,8 +64,7 @@ func Test_HandleFunc(t *testing.T) {
 	cmdmux.HandleFunc("/config/menu", nil)
 	cmdmux.HandleFunc("/install", nil)
 
-	fmt.Printf("output of cmdmux.String():\n")
-	fmt.Println(cmdmux.String())
+	fmt.Printf("output of PrintTree:\n")
 	cmdmux.PrintTree(os.Stdout)
 
 	os.Args = []string{"gotest", "build", "kernel", "-p", "test"}

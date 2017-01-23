@@ -48,51 +48,41 @@ func newCmdNode(name string) *cmdNode {
 	return node
 }
 
-var lastDepth = 0
-
 const exeSymbol = "*"
 
-func printTreeNode(node *cmdNode, depth int, data interface{}) {
-	w := data.(io.Writer)
-	if lastDepth != depth {
-		fmt.Fprintf(w, "\n------------ [%d] -----------------\n", depth)
-		lastDepth = depth
-	}
-	if node.handler != nil {
-		fmt.Fprintf(w, "%s ", node.name+exeSymbol)
+func (n *cmdNode) modifyName() string {
+	if n.handler == nil {
+		return n.name
 	} else {
-		fmt.Fprintf(w, "%s ", node.name)
+		return n.name + exeSymbol
+	}
+}
+
+func (n *cmdNode) doPrintTree(w io.Writer, depth int, last bool) {
+	for i := 0; i < depth-1; i++ {
+		fmt.Fprintf(w, "│   ")
+	}
+	if depth != 0 {
+		if last {
+			fmt.Fprintln(w, "└── "+n.modifyName())
+		} else {
+			fmt.Fprintln(w, "├── "+n.modifyName())
+		}
+	} else {
+		fmt.Fprintln(w, n.modifyName())
+	}
+	len := len(n.subNodes)
+	for i, subNode := range n.subNodes {
+		last := false
+		if i == len-1 {
+			last = true
+		}
+		subNode.doPrintTree(w, depth+1, last)
 	}
 }
 
 func (n *cmdNode) printTree(w io.Writer) {
-	walkByDepth(n.subNodes, 0, printTreeNode, w)
-	fmt.Fprintf(w, "\n-----------------------------------\n")
-}
-
-func (n *cmdNode) toString(prefix string, result *string) {
-	switch prefix {
-	case "/":
-		if n.handler != nil {
-			prefix = exeSymbol
-		} else {
-			prefix = ""
-		}
-	default:
-		if n.handler != nil {
-			prefix = prefix + "/" + n.name + exeSymbol
-		} else {
-			prefix = prefix + "/" + n.name
-		}
-	}
-
-	if len(n.subNodes) == 0 {
-		*result = *result + prefix + "\n"
-	} else {
-		for _, v := range n.subNodes {
-			v.toString(prefix, result)
-		}
-	}
+	n.doPrintTree(w, 0, false)
 }
 
 func (n *cmdNode) depth(preDepth int) int {
@@ -153,4 +143,50 @@ func (n *cmdNode) hasSubNode(name string) *cmdNode {
 		}
 	}
 	return nil
+}
+
+////////////////////////////////////////////////////////////////////////////////
+var lastDepth = 0
+
+func printLevelNode(node *cmdNode, depth int, data interface{}) {
+	w := data.(io.Writer)
+	if lastDepth != depth {
+		fmt.Fprintf(w, "\n------------ [%d] -----------------\n", depth)
+		lastDepth = depth
+	}
+	if node.handler != nil {
+		fmt.Fprintf(w, "%s ", node.name+exeSymbol)
+	} else {
+		fmt.Fprintf(w, "%s ", node.name)
+	}
+}
+
+func (n *cmdNode) printLevels(w io.Writer) {
+	walkByDepth(n.subNodes, 0, printLevelNode, w)
+	fmt.Fprintf(w, "\n-----------------------------------\n")
+}
+
+func (n *cmdNode) toString(prefix string, result *string) {
+	switch prefix {
+	case "/":
+		if n.handler != nil {
+			prefix = exeSymbol
+		} else {
+			prefix = ""
+		}
+	default:
+		if n.handler != nil {
+			prefix = prefix + "/" + n.name + exeSymbol
+		} else {
+			prefix = prefix + "/" + n.name
+		}
+	}
+
+	if len(n.subNodes) == 0 {
+		*result = *result + prefix + "\n"
+	} else {
+		for _, v := range n.subNodes {
+			v.toString(prefix, result)
+		}
+	}
 }
