@@ -58,9 +58,13 @@ func (n *cmdNode) modifyName() string {
 	}
 }
 
-func (n *cmdNode) doPrintTree(w io.Writer, depth int, last bool) {
+func (n *cmdNode) doPrintTree(w io.Writer, depth int, last bool, onlyOne []bool) {
 	for i := 0; i < depth-1; i++ {
-		fmt.Fprintf(w, "│   ")
+		if onlyOne[i] {
+			fmt.Fprintf(w, "    ")
+		} else {
+			fmt.Fprintf(w, "│   ")
+		}
 	}
 	if depth != 0 {
 		if last {
@@ -72,17 +76,23 @@ func (n *cmdNode) doPrintTree(w io.Writer, depth int, last bool) {
 		fmt.Fprintln(w, n.modifyName())
 	}
 	len := len(n.subNodes)
+	if len == 1 {
+		onlyOne = append(onlyOne, true)
+	} else {
+		onlyOne = append(onlyOne, false)
+	}
 	for i, subNode := range n.subNodes {
 		last := false
 		if i == len-1 {
 			last = true
 		}
-		subNode.doPrintTree(w, depth+1, last)
+		subNode.doPrintTree(w, depth+1, last, onlyOne)
 	}
 }
 
 func (n *cmdNode) printTree(w io.Writer) {
-	n.doPrintTree(w, 0, false)
+	var onlyOne []bool
+	n.doPrintTree(w, 0, false, onlyOne)
 }
 
 func (n *cmdNode) depth(preDepth int) int {
