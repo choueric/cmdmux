@@ -21,18 +21,20 @@ The package can:
 
 1. Build a terminal programme with various commands easily.
 2. Generate a shell completion file (Now only for bash) !
+3. Output commands tree.
 
 # Usage
 
 ## Build command line
 
-Below is a simple example:
+A simple example:
 
 ```go
 package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/choueric/cmdmux"
 )
@@ -42,8 +44,8 @@ type Options struct {
 }
 
 func rootHandler(args []string, data interface{}) (int, error) {
-	fmt.Println("Usage: build")
-	fmt.Println("       build kernel")
+	fmt.Println("Usage:")
+	cmdmux.PrintTree(os.Stderr)
 	return 0, nil
 }
 
@@ -64,6 +66,8 @@ func main() {
 	cmdmux.HandleFunc("/", rootHandler)
 	cmdmux.HandleFunc("/build", buildHandler)
 	cmdmux.HandleFunc("/build/kernel", buildKernelHandler)
+	cmdmux.HandleFunc("/build/kernel/image", buildKernelHandler)
+	cmdmux.HandleFunc("/build/uboot", buildKernelHandler)
 
 	cmdmux.Execute(opt)
 }
@@ -80,7 +84,7 @@ The only one parameter of `Execute()` is passed to the parameter `data` of
 the handler function. The parameter `args` of handler function is the rest part
 of command line stripped off the command-path part.
 
-The results of this example is like:
+The results of this example are like:
 
 ```
 $ test build
@@ -90,15 +94,21 @@ $ test build kernel optoins one
 invoke 'build kernel', args = [options one]
 
 $ test cmd
-Usage: build
-       build kernel
-
-$ test
-Usage: build
-       build kernel
+Usage:
+/*
+└── build*
+    ├── kernel*
+    │   └── image*
+    └── uboot*
 ```
 
-## Generate shell completion file
+## Print Commands Tree
+
+In the above example, the root handler `rootHandler()` invoke `PrintTree()` to
+output the commands tree. If one node has handler, it is appended a '*' symbol
+after its command name.
+
+## Generate Shell Completion File
 
 After building various commands with `HandleFunc()`, it's time to get a shell
 (bash actually) completion file which helps users of your programme input
