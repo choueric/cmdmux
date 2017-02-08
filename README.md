@@ -136,3 +136,7 @@ Then apply this file:
 ```sh
 $ source ./test-completion
 ```
+
+# License
+
+See the LICENSE file.
