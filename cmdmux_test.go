@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"testing"
-
-	"github.com/choueric/cmdmux"
 )
 
 const (
@@ -39,20 +37,20 @@ func flagHandler(args []string, data interface{}) (int, error) {
 
 // use the built-in variable
 func Test_HandleFunc(t *testing.T) {
-	cmdmux.HandleFunc("/", root_handler)
-	cmdmux.HandleFunc("/config/def", nil)
-	cmdmux.HandleFunc("/build/kernel/image", nil)
-	cmdmux.HandleFunc("/build/dtb", nil)
-	cmdmux.HandleFunc("/build", build)
-	cmdmux.HandleFunc("/build/kernel", build_kernel)
-	cmdmux.HandleFunc("/config/menu", nil)
-	cmdmux.HandleFunc("/install", nil)
+	HandleFunc("/", root_handler)
+	HandleFunc("/config/def", nil)
+	HandleFunc("/build/kernel/image", nil)
+	HandleFunc("/build/dtb", nil)
+	HandleFunc("/build", build)
+	HandleFunc("/build/kernel", build_kernel)
+	HandleFunc("/config/menu", nil)
+	HandleFunc("/install", nil)
 
 	fmt.Printf("output of PrintTree:\n")
-	cmdmux.PrintTree(os.Stdout)
+	PrintTree(os.Stdout)
 
 	os.Args = []string{"gotest", "build", "kernel", "-p", "test"}
-	ret, err := cmdmux.Execute(nil)
+	ret, err := Execute(nil)
 	if err != nil {
 		t.Error(err)
 		return
@@ -64,7 +62,7 @@ func Test_HandleFunc(t *testing.T) {
 
 	os.Args = []string{"gotest", "build"}
 
-	ret, err = cmdmux.Execute(nil)
+	ret, err = Execute(nil)
 	if err != nil {
 		t.Error(err)
 		return
@@ -76,7 +74,7 @@ func Test_HandleFunc(t *testing.T) {
 }
 
 func Test_Invalid(t *testing.T) {
-	cmdMux := cmdmux.New()
+	cmdMux := New()
 	err := cmdMux.HandleFunc("build", nil)
 	if err == nil {
 		t.Error("should be erroneous")
@@ -84,7 +82,7 @@ func Test_Invalid(t *testing.T) {
 }
 
 func Test_Execute_normal(t *testing.T) {
-	cmdMux := cmdmux.New()
+	cmdMux := New()
 	cmdMux.HandleFunc("/build/kernel", build_kernel)
 	os.Args = []string{"gotest", "build", "kernel"}
 
@@ -100,7 +98,7 @@ func Test_Execute_normal(t *testing.T) {
 }
 
 func Test_Execute_opts(t *testing.T) {
-	cmdMux := cmdmux.New()
+	cmdMux := New()
 	cmdMux.HandleFunc("/build/kernel", build_kernel)
 	os.Args = []string{"gotest", "build", "kernel"}
 
@@ -116,7 +114,7 @@ func Test_Execute_opts(t *testing.T) {
 }
 
 func Test_Execute_noMidNode(t *testing.T) {
-	cmdMux := cmdmux.New()
+	cmdMux := New()
 	cmdMux.HandleFunc("/build/kernel", build_kernel)
 	os.Args = []string{"gotest", "build"}
 
@@ -127,7 +125,7 @@ func Test_Execute_noMidNode(t *testing.T) {
 }
 
 func Test_Execute_midNode(t *testing.T) {
-	cmdMux := cmdmux.New()
+	cmdMux := New()
 	cmdMux.HandleFunc("/build", build)
 	cmdMux.HandleFunc("/build/kernel", build_kernel)
 	os.Args = []string{"gotest", "build"}
@@ -144,7 +142,7 @@ func Test_Execute_midNode(t *testing.T) {
 }
 
 func Test_Execute_root(t *testing.T) {
-	cmdMux := cmdmux.New()
+	cmdMux := New()
 	cmdMux.HandleFunc("/", root_handler)
 	cmdMux.HandleFunc("/build/kernel", build_kernel)
 	os.Args = []string{"gotest"}
@@ -161,7 +159,7 @@ func Test_Execute_root(t *testing.T) {
 }
 
 func Test_Completion(t *testing.T) {
-	cmdMux := cmdmux.New()
+	cmdMux := New()
 	cmdMux.HandleFunc("/build", nil)
 	cmdMux.HandleFunc("/build/kernel", nil)
 	cmdMux.HandleFunc("/build/kernel/image", nil)
