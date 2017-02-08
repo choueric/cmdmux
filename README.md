@@ -1,6 +1,6 @@
 # cmdmux
 
-Package cmdmux implements a command parser and router for terminal programme.
+Package cmdmux implements a command parser and router for terminal program.
 
 
 [![Build Status](https://travis-ci.org/choueric/cmdmux.svg?branch=master)](https://travis-ci.org/choueric/cmdmux)
@@ -9,7 +9,7 @@ Package cmdmux implements a command parser and router for terminal programme.
 
 # Overview
 
-In general, there are two styles a terminal programme to interact with users.
+In general, there are two styles a terminal program to interact with users.
 
 1. Use -o, -p to specify parameters. Most programmes are in this way.
 2. Use sub-commands, like git which uses only one level sub-command.
@@ -19,7 +19,7 @@ second this package.
 
 The package can:
 
-1. Build a terminal programme with various commands easily.
+1. Build a terminal program with various commands easily.
 2. Generate a shell completion file (Now only for bash) !
 3. Output commands tree.
 
@@ -111,10 +111,10 @@ after its command name.
 ## Generate Shell Completion File
 
 After building various commands with `HandleFunc()`, it's time to get a shell
-(bash actually) completion file which helps users of your programme input
+(bash actually) completion file which helps users of your program input
 commands easily on terminal.
 
-Below is a example to get such file for `test` programme:
+Below is a example to get such file for `test` program:
 
 ```go
 // some HandleFunc codes ...

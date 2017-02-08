@@ -1,4 +1,4 @@
-// Package cmdmux is used to parse and route commands of terminal programe.
+// Package cmdmux is used to parse and route commands of terminal program.
 package cmdmux
 
 import (
@@ -13,7 +13,7 @@ import (
 // if error is nil, then return value int is useful.
 type CmdHandler func([]string, interface{}) (int, error)
 
-// CmdMux represents programme's commands.
+// CmdMux represents program's commands.
 type CmdMux struct {
 	root *cmdNode
 }
