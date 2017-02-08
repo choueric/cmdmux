@@ -1,4 +1,4 @@
-package cmdmux_test
+package cmdmux
 
 import (
 	"errors"
