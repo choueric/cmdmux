@@ -7,25 +7,28 @@ import (
 	"github.com/choueric/cmdmux"
 )
 
-type Options struct {
-	name string
+var buildKernelImageOps = cmdmux.CmdOps{
+	Synopsis: func() string { return "build linux kernel image" },
+	Usage:    func() string { return "--> build kernel image usage" },
+	Handler:  buildKernelImageHandler,
 }
 
-func rootHandler(args []string, data interface{}) (int, error) {
-	fmt.Println("Usage:")
-	cmdmux.PrintTree(os.Stdout)
-	return 0, nil
-}
-
-func buildHandler(args []string, data interface{}) (int, error) {
-	opt := data.(*Options)
-	fmt.Printf("invoke 'build' of %s\n", opt.name)
-	return 1, nil
-}
-
-func buildKernelHandler(args []string, data interface{}) (int, error) {
-	fmt.Printf("invoke 'build kernel', args = %v\n", args)
+func buildKernelImageHandler(args []string, data interface{}) (int, error) {
+	fmt.Printf("invoke 'build kernel image', args = %v\n", args)
 	return 2, nil
+}
+
+func buildKernelDtbUsage() string {
+	return "--> build kernel dtb usage"
+}
+
+func buildKernelDtbHandler(args []string, data interface{}) (int, error) {
+	fmt.Printf("invoke 'build kernel dtb', args = %v\n", args)
+	return 2, nil
+}
+
+func completionUsage() string {
+	return "--> completion usage"
 }
 
 func completionHandler(args []string, data interface{}) (int, error) {
@@ -33,31 +36,24 @@ func completionHandler(args []string, data interface{}) (int, error) {
 	return 2, nil
 }
 
-func optionOHandler(args []string, data interface{}) (int, error) {
-	fmt.Printf("invoke 'option -o', args = %v\n", args)
-	return 3, nil
-}
-
-func optionPHandler(args []string, data interface{}) (int, error) {
-	fmt.Printf("invoke 'option -p', args = %v\n", args)
-	return 3, nil
-}
-
 func main() {
-	opt := &Options{name: "arm"}
+	cmdpath := "/build/kernel/image"
+	cmdmux.Register(cmdpath, buildKernelImageOps)
 
-	cmdmux.HandleFunc("/", rootHandler)
-	cmdmux.HandleFunc("/build/kernel/image", buildKernelHandler)
-	cmdmux.HandleFunc("/build/kernel/dtb", buildKernelHandler)
-	cmdmux.HandleFunc("/build", buildHandler)
-	cmdmux.HandleFunc("/option/-o", optionOHandler)
-	cmdmux.HandleFunc("/option/-p", optionPHandler)
-	cmdmux.HandleFunc("/completion", completionHandler)
+	cmdpath = "/build/kernel/dtb"
+	cmdmux.HandleFunc(cmdpath, buildKernelDtbHandler)
+	cmdmux.AddHelpInfo(cmdpath, func() string { return "build liux DTB file" }, buildKernelDtbUsage)
 
-	ret, err := cmdmux.Execute(opt)
+	cmdpath = "/completion"
+	cmdmux.HandleFunc(cmdpath, completionHandler)
+	cmdmux.AddHelpInfo(cmdpath, func() string { return "generate compeltion file" }, completionUsage)
+
+	cmdmux.EnableHelp()
+
+	ret, err := cmdmux.Execute(nil)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Printf("return value: %d\n", ret)
+	fmt.Printf("\nreturn value: %d\n", ret)
 }
