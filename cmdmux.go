@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 )
 
 // CmdHanlder is the type of callback function for command.
@@ -34,33 +33,24 @@ func (c *CmdMux) PrintTree(w io.Writer) {
 
 // HandleFunc registers the handler function for the given command path cmdpath
 func (c *CmdMux) HandleFunc(cmdpath string, handler CmdHandler) error {
-	if cmdpath[0] != '/' {
-		return errors.New("cmdmux: cmdpath should be absolute")
+	node, err := c.newNode(cmdpath)
+	if err != nil {
+		return err
 	}
-
-	if cmdpath == "/" {
-		c.root.handler = handler
-		return nil
-	}
-
-	cmdStrs := strings.Split(cmdpath, "/")[1:]
-	last := len(cmdStrs) - 1
-	node := c.root
-	for i, v := range cmdStrs {
-		sub := node.hasSubNode(v)
-		if sub == nil {
-			sub = newCmdNode(v)
-			node.subNodes = append(node.subNodes, sub)
-		}
-		if i == last {
-			node = sub
-			break
-		}
-		node = sub
-	}
-	node.handler = handler
+	node.ops.Handler = handler
 	//fmt.Printf("cmdmux: add handler %s -> %s\n", cmdpath, node.name)
 
+	return nil
+}
+
+// AddHelpInfo adds help information to the registed cmd node.
+func (c *CmdMux) AddHelpInfo(cmdpath string, synopsis func() string, usage func() string) error {
+	node, err := c.getNode(cmdpath)
+	if err != nil {
+		return err
+	}
+	node.ops.Synopsis = synopsis
+	node.ops.Usage = usage
 	return nil
 }
 
@@ -83,19 +73,44 @@ func (c *CmdMux) Execute(data interface{}) (int, error) {
 	if path == "" {
 		path = "/"
 	}
-	if node.handler == nil {
+	if node.ops.Handler == nil {
 		msg := fmt.Sprintf("cmdmux: %s does not have a handler.", path)
+		c.PrintUsage(os.Stderr, "")
 		return 0, errors.New(msg)
 	}
 
 	//fmt.Printf("cmdmux: invode %s\n", path)
-	return node.handler(opts, data)
+	return node.ops.Handler(opts, data)
+}
+
+// PrintUsage outputs usage of cmd node specified by cmdpath.
+// cmdpath must be in the format like "/cmd1/cmd2".
+func (c *CmdMux) PrintUsage(w io.Writer, cmdpath string) {
+	if cmdpath == "" {
+		c.root.printAllUsages(w, 0)
+		return
+	}
+
+	node, err := c.getNode(cmdpath)
+	if err != nil {
+		fmt.Fprintln(w, err)
+		return
+	}
+	if node.ops.Usage != nil {
+		fmt.Fprintf(os.Stderr, "%s", node.ops.Usage())
+	}
 }
 
 // HandleFunc registers the handler function for the given command path cmdpath
 // in the default CmdMux.
 func HandleFunc(cmdpath string, handler CmdHandler) error {
 	return std.HandleFunc(cmdpath, handler)
+}
+
+// AddHelpInfo adds help information to the registed cmd node
+// in the default CmdMux.
+func AddHelpInfo(cmdpath string, synopsis func() string, usage func() string) error {
+	return std.AddHelpInfo(cmdpath, synopsis, usage)
 }
 
 // Execute accepts the os.Args as command and executes it with data
@@ -107,4 +122,8 @@ func Execute(data interface{}) (int, error) {
 // PrintTree outputs a simple tree structure of built-in cmdmux
 func PrintTree(w io.Writer) {
 	std.PrintTree(w)
+}
+
+func PrintUsage(w io.Writer, cmdpath string) {
+	std.PrintUsage(w, cmdpath)
 }

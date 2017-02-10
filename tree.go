@@ -19,8 +19,8 @@ import (
 // 2. it is easy to generate the completion file using tree.
 type cmdNode struct {
 	name     string
+	ops      CmdOps
 	subNodes []*cmdNode
-	handler  CmdHandler
 }
 
 // cmdnode, depth, data
@@ -34,7 +34,7 @@ func newCmdNode(name string) *cmdNode {
 const exeSymbol = "*"
 
 func (n *cmdNode) modifyName() string {
-	if n.handler == nil {
+	if n.ops.Handler == nil {
 		return n.name
 	} else {
 		return n.name + exeSymbol
@@ -78,6 +78,30 @@ func (n *cmdNode) printTree(w io.Writer) {
 	n.doPrintTree(w, 0, false, onlyOne)
 }
 
+func (n *cmdNode) printAllUsages(w io.Writer, depth int) {
+	for i := 0; i < depth-1; i++ {
+		fmt.Fprintf(w, "  ")
+	}
+	if n.name != "/" {
+		fmt.Fprintf(w, "  %s", n.name)
+		if n.ops.Synopsis != nil {
+			fmt.Fprintf(w, "\t: %s\n", n.ops.Synopsis())
+		} else {
+			fmt.Fprintf(w, "\n")
+		}
+		// TODO: need print usage ?
+		/*
+			if n.ops.usage != nil {
+				n.ops.usage()
+			}
+		*/
+	}
+
+	for _, subNode := range n.subNodes {
+		subNode.printAllUsages(w, depth+1)
+	}
+}
+
 func (n *cmdNode) depth(preDepth int) int {
 	maxDepth := preDepth
 	if len(n.subNodes) != 0 {
@@ -105,6 +129,33 @@ func walkByDepth(nodes []*cmdNode, depth int, f walkHandler, data interface{}) {
 		}
 	}
 	walkByDepth(next, depth, f, data)
+}
+
+func (c *CmdMux) newNode(cmdpath string) (*cmdNode, error) {
+	if cmdpath[0] != '/' {
+		return nil, errors.New("cmdmux: cmdpath should be absolute")
+	}
+
+	if cmdpath == "/" {
+		return c.root, nil
+	}
+
+	cmdStrs := strings.Split(cmdpath, "/")[1:]
+	last := len(cmdStrs) - 1
+	node := c.root
+	for i, v := range cmdStrs {
+		sub := node.hasSubNode(v)
+		if sub == nil {
+			sub = newCmdNode(v)
+			node.subNodes = append(node.subNodes, sub)
+		}
+		if i == last {
+			node = sub
+			break
+		}
+		node = sub
+	}
+	return node, nil
 }
 
 func (c *CmdMux) getNode(cmdpath string) (*cmdNode, error) {
@@ -147,7 +198,7 @@ func printLevelNode(node *cmdNode, depth int, data interface{}) {
 		fmt.Fprintf(w, "\n------------ [%d] -----------------\n", depth)
 		lastDepth = depth
 	}
-	if node.handler != nil {
+	if node.ops.Handler != nil {
 		fmt.Fprintf(w, "%s ", node.name+exeSymbol)
 	} else {
 		fmt.Fprintf(w, "%s ", node.name)
@@ -162,13 +213,13 @@ func (n *cmdNode) printLevels(w io.Writer) {
 func (n *cmdNode) toString(prefix string, result *string) {
 	switch prefix {
 	case "/":
-		if n.handler != nil {
+		if n.ops.Handler != nil {
 			prefix = exeSymbol
 		} else {
 			prefix = ""
 		}
 	default:
-		if n.handler != nil {
+		if n.ops.Handler != nil {
 			prefix = prefix + "/" + n.name + exeSymbol
 		} else {
 			prefix = prefix + "/" + n.name
