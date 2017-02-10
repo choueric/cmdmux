@@ -178,3 +178,30 @@ func Test_Completion(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func Test_PrintUsage(t *testing.T) {
+	cmdMux := New()
+	cmdMux.HandleFunc("/build/kernel", nil)
+	cmdMux.AddHelpInfo("/build/kernel",
+		func() string { return "build kernel image" },
+		func() string { return "Usage of /build/kernel:\n  --> build kernel\n" })
+	cmdMux.HandleFunc("/build/uboot", nil)
+	cmdMux.AddHelpInfo("/build/uboot",
+		func() string { return "build uboot image" },
+		func() string { return "Usage of /build/uboot:\n  --> build uboot\n" })
+
+	cmdMux.EnableHelp()
+
+	fmt.Printf("------- test help --------------\n")
+	os.Args = []string{"gotest", "help"}
+	_, err := cmdMux.Execute(nil)
+	if err != nil {
+		t.Error(err)
+	}
+
+	os.Args = []string{"gotest", "help", "/build/uboot"}
+	_, err = cmdMux.Execute(nil)
+	if err != nil {
+		t.Error(err)
+	}
+}
