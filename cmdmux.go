@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"text/tabwriter"
 )
 
 // CmdHanlder is the type of callback function for command.
@@ -87,7 +88,9 @@ func (c *CmdMux) Execute(data interface{}) (int, error) {
 // cmdpath must be in the format like "/cmd1/cmd2".
 func (c *CmdMux) PrintUsage(w io.Writer, cmdpath string) {
 	if cmdpath == "" {
-		c.root.printAllUsages(w, 0)
+		tw := tabwriter.NewWriter(w, 0, 0, 1, ' ', tabwriter.TabIndent)
+		c.root.printAllUsages(tw, 0)
+		tw.Flush()
 		return
 	}
 
