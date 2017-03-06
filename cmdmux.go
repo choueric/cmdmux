@@ -76,7 +76,6 @@ func (c *CmdMux) Execute(data interface{}) (int, error) {
 	}
 	if node.ops.Handler == nil {
 		msg := fmt.Sprintf("cmdmux: %s does not have a handler.", path)
-		c.PrintUsage(os.Stderr, "")
 		return 0, errors.New(msg)
 	}
 
