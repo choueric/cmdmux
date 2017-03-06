@@ -38,13 +38,15 @@ func flagHandler(args []string, data interface{}) (int, error) {
 // use the built-in variable
 func Test_HandleFunc(t *testing.T) {
 	HandleFunc("/", root_handler)
-	HandleFunc("/config/def", nil)
-	HandleFunc("/build/kernel/image", nil)
-	HandleFunc("/build/dtb", nil)
-	HandleFunc("/build", build)
 	HandleFunc("/build/kernel", build_kernel)
+	HandleFunc("/build/kernel/image", nil)
 	HandleFunc("/config/menu", nil)
-	HandleFunc("/install", nil)
+	HandleFunc("/config/install", nil)
+	HandleFunc("/config/install/aa", nil)
+	HandleFunc("/config/def", nil)
+	HandleFunc("/config/def/test", nil)
+	HandleFunc("/config/def/main", nil)
+	HandleFunc("/install/image", nil)
 
 	fmt.Printf("output of PrintTree:\n")
 	PrintTree(os.Stdout)
@@ -57,18 +59,6 @@ func Test_HandleFunc(t *testing.T) {
 	}
 
 	if ret != BUILD_KERNEL_RET {
-		t.Errorf("return value wrong: %d\n", ret)
-	}
-
-	os.Args = []string{"gotest", "build"}
-
-	ret, err = Execute(nil)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	if ret != BUILD_RET {
 		t.Errorf("return value wrong: %d\n", ret)
 	}
 }

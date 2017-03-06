@@ -41,41 +41,47 @@ func (n *cmdNode) modifyName() string {
 	}
 }
 
-func (n *cmdNode) doPrintTree(w io.Writer, depth int, last bool, onlyOne []bool) {
-	for i := 0; i < depth-1; i++ {
-		if onlyOne[i] {
-			fmt.Fprintf(w, "    ")
+func (n *cmdNode) doPrintTree(w io.Writer, depth int, hasSibling []bool) {
+	dbg := func() string {
+		return fmt.Sprintf(" (depth = %d, hasSibling = %v)", depth, hasSibling)
+	}
+	for i := 0; i < depth; i++ {
+		if i != depth-1 {
+			if hasSibling[i] {
+				fmt.Fprintf(w, "│   ")
+			} else {
+				fmt.Fprintf(w, "    ")
+			}
 		} else {
-			fmt.Fprintf(w, "│   ")
+			if hasSibling[i] {
+				fmt.Fprintln(w, "├── "+n.modifyName()+dbg())
+			} else {
+				fmt.Fprintln(w, "└── "+n.modifyName()+dbg())
+			}
 		}
 	}
-	if depth != 0 {
-		if last {
-			fmt.Fprintln(w, "└── "+n.modifyName())
-		} else {
-			fmt.Fprintln(w, "├── "+n.modifyName())
-		}
-	} else {
-		fmt.Fprintln(w, n.modifyName())
+
+	if depth == 0 {
+		fmt.Fprintln(w, n.modifyName()+dbg())
 	}
-	len := len(n.subNodes)
-	if len == 1 {
-		onlyOne = append(onlyOne, true)
-	} else {
-		onlyOne = append(onlyOne, false)
-	}
+
+	length := len(n.subNodes)
 	for i, subNode := range n.subNodes {
-		last := false
-		if i == len-1 {
-			last = true
+		if i == length-1 {
+			hasSibling = append(hasSibling, false)
+		} else {
+			hasSibling = append(hasSibling, true)
 		}
-		subNode.doPrintTree(w, depth+1, last, onlyOne)
+
+		subNode.doPrintTree(w, depth+1, hasSibling)
+		l := len(hasSibling)
+		hasSibling = append(hasSibling[:l-1])
 	}
 }
 
 func (n *cmdNode) printTree(w io.Writer) {
-	var onlyOne []bool
-	n.doPrintTree(w, 0, false, onlyOne)
+	hasSibling := []bool{}
+	n.doPrintTree(w, 0, hasSibling)
 }
 
 func (n *cmdNode) printAllUsages(w io.Writer, depth int) {
