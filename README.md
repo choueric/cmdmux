@@ -6,6 +6,8 @@ Package cmdmux implements a command parser and router for terminal program.
 [![Build Status](https://travis-ci.org/choueric/cmdmux.svg?branch=master)](https://travis-ci.org/choueric/cmdmux)
 [![GoDoc](https://godoc.org/github.com/choueric/cmdmux?status.svg)](https://godoc.org/github.com/choueric/cmdmux)
 
+## TODO
+- [ ] Build the handle routes from help nodes so that when adding a new command, just add a help node and no need to touch other parts.
 
 # Overview
 
